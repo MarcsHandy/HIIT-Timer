@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C960CC122E78C893005A276A /* halfway_alert.m4a in Resources */ = {isa = PBXBuildFile; fileRef = C960CC112E78C893005A276A /* halfway_alert.m4a */; };
+		C960CC182E78CC9B005A276A /* countdown_alert.m4a in Resources */ = {isa = PBXBuildFile; fileRef = C960CC172E78CC9B005A276A /* countdown_alert.m4a */; };
+		C960CC1A2E78D25C005A276A /* countdown_alert_321.m4a in Resources */ = {isa = PBXBuildFile; fileRef = C960CC192E78D25C005A276A /* countdown_alert_321.m4a */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		C960CBF12E788B55005A276A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +33,9 @@
 		C960CBE32E788B4D005A276A /* HIIT Timer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HIIT Timer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C960CBF02E788B55005A276A /* HIIT TimerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "HIIT TimerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C960CBFA2E788B55005A276A /* HIIT TimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "HIIT TimerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C960CC112E78C893005A276A /* halfway_alert.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = halfway_alert.m4a; sourceTree = "<group>"; };
+		C960CC172E78CC9B005A276A /* countdown_alert.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = countdown_alert.m4a; sourceTree = "<group>"; };
+		C960CC192E78D25C005A276A /* countdown_alert_321.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = countdown_alert_321.m4a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +84,9 @@
 		C960CBDA2E788B4D005A276A = {
 			isa = PBXGroup;
 			children = (
+				C960CC192E78D25C005A276A /* countdown_alert_321.m4a */,
+				C960CC172E78CC9B005A276A /* countdown_alert.m4a */,
+				C960CC112E78C893005A276A /* halfway_alert.m4a */,
 				C960CBE52E788B4D005A276A /* HIIT Timer */,
 				C960CBF32E788B55005A276A /* HIIT TimerTests */,
 				C960CBFD2E788B55005A276A /* HIIT TimerUITests */,
@@ -212,6 +224,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C960CC1A2E78D25C005A276A /* countdown_alert_321.m4a in Resources */,
+				C960CC122E78C893005A276A /* halfway_alert.m4a in Resources */,
+				C960CC182E78CC9B005A276A /* countdown_alert.m4a in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,6 +420,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -433,6 +449,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
