@@ -49,7 +49,7 @@ enum AdjusterType: CaseIterable {
         case .rest: return 5...180        // 5 seconds to 3 minutes
         case .rounds: return 1...20
         case .roundReset: return 0...300  // 0 to 5 minutes
-        case .exercises: return 1...20
+        case .exercises: return 1...30
         case .getReady: return 3...60     // 3 seconds to 1 minute
         }
     }

@@ -7,34 +7,43 @@ struct TimerDisplayView: View {
         ZStack {
             // Outer decorative rings
             ForEach(0..<3) { index in
+                let color = viewModel.africanPatternColors[index % viewModel.africanPatternColors.count].opacity(0.3)
+                let lineWidth = CGFloat(8 - index * 2)
+                
                 Circle()
-                    .stroke(
-                        viewModel.africanPatternColors[index % viewModel.africanPatternColors.count].opacity(0.3),
-                        lineWidth: CGFloat(8 - index * 2)
-                    )
+                    .stroke(color, lineWidth: lineWidth)
             }
             
-            // Main progress circle with smooth animation
+            // Main progress circle
+            let progress: CGFloat = viewModel.currentMaxTime > 0
+                ? CGFloat(viewModel.smoothProgressValue) / CGFloat(viewModel.currentMaxTime)
+                : 0
+
             Circle()
-                .trim(from: 0.0, to: CGFloat(viewModel.currentProgressTime) / CGFloat(viewModel.currentMaxTime))
-                .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
+                .trim(from: 0, to: progress)
+                .stroke(
+                    style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round)
+                )
                 .foregroundColor(viewModel.currentPhaseColor)
-                .rotationEffect(Angle(degrees: 270))
-                .animation(.linear(duration: 0.1), value: viewModel.currentProgressTime) // Faster animation for smoothness
+                .rotationEffect(.degrees(270))
+                .animation(.linear(duration: 0.1), value: viewModel.smoothProgressValue)
                 .shadow(color: viewModel.currentPhaseColor.opacity(0.3), radius: 5, x: 0, y: 0)
             
             VStack(spacing: 8) {
+                // Phase label
                 Text(viewModel.currentPhase)
                     .font(.title3)
                     .fontWeight(.heavy)
                     .foregroundColor(viewModel.currentPhaseColor)
                     .textCase(.uppercase)
                 
+                // Countdown timer
                 Text("\(viewModel.currentDisplayTime)s")
                     .font(.system(size: 42, weight: .black, design: .rounded))
                     .foregroundColor(.black)
                 
-                if !viewModel.model.isGetReadyPhase {
+                // Exercise & round info (hide during GET READY and FINISHED)
+                if viewModel.model.phase != .getReady && viewModel.model.phase != .finished {
                     HStack(spacing: 15) {
                         Label("Ex \(viewModel.model.currentExercise)/\(viewModel.model.exercises)", systemImage: "figure.run")
                             .font(.caption)

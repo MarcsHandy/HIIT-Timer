@@ -1,386 +1,437 @@
+import Foundation
 import SwiftUI
 import AVFoundation
 
 @MainActor
 class TimerViewModel: ObservableObject {
-    @Published var model = TimerModel()
-    @Published var isRunning: Bool = false
+    @Published private(set) var model = TimerModel()
+    
+    // Background Timer
+    private var startDate: Date?
+    
+    // Adjustment UI state
     @Published var showingAdjuster: Bool = false
     @Published var currentAdjuster: AdjusterType?
     @Published var tempValue: Int = 0
-    @Published var isEditingText: Bool = false
     @Published var textInput: String = ""
+    @Published var isEditingText: Bool = false
     
-    // Alert trackers
-    @Published var hasPlayedHalfwayAlert: Bool = false
-    @Published var hasPlayedCountdownAlert: Bool = false
-    @Published var hasPlayedRestCountdown: Bool = false
-    @Published var hasPlayedGetReadyCountdown: Bool = false
-    @Published var hasPlayedRoundResetCountdown: Bool = false
+    // Smooth UI updates
+    @Published var smoothProgressValue: Double = 0.0
     
-    private var smoothAnimationTimer: Timer?
+    // Timer running state
+    @Published var isRunning: Bool = false
+    @Published var totalTimeRemaining: Int = 0
+    private var totalWorkoutTimeAtStart: Int = 0
+    private var totalPausedDuration: TimeInterval = 0
+    private var pauseStartTime: Date?
+    
+    // Audio manager
     private let audioManager = AudioManager()
     
-    // For smooth animation across all phases
-    private var phaseStartTime: Date?
-    private var currentPhaseDuration: TimeInterval = 0.0
-    private var smoothProgressValue: Double = 0.0
+    // Timer
+    private var timer: Timer?
+    private var phaseEndTime: Date?
+    private var phaseTimeRemainingExact: TimeInterval = 0
     
-    // Ugandan colors
+    // Workout tracking
+    private var workoutStartTime: Date?
+    @Published private(set) var workoutHistory: [WorkoutHistory] = []
+    @Published var currentWorkoutName: String? = nil
+    
+    // Alert trackers
+    private var hasPlayedHalfwayAlert = false
+    private var hasPlayedCountdownAlert = false
+    private var hasPlayedRoundResetCountdown = false
+    
+    // MARK: - Colors
     let ugandaColors: [Color] = [.black, .yellow, .red]
     let africanPatternColors: [Color] = [.orange, .red, .yellow, .green, .blue, .purple]
     
-    // Computed property for smooth progress that's safe to access
-    var smoothProgress: Double {
-        smoothProgressValue
-    }
-    
-    // Computed properties
-    var totalWorkoutTime: Int {
-        let totalPlannedTime = calculateTotalPlannedTime()
-        let elapsedTime = calculateElapsedTime()
-        return max(0, totalPlannedTime - elapsedTime)
-    }
-
-    var formattedTotalTime: String {
-        let minutes = totalWorkoutTime / 60
-        let seconds = totalWorkoutTime % 60
-        return "\(minutes):\(seconds < 10 ? "0" : "")\(seconds)"
-    }
-    
-    private func calculateTotalPlannedTime() -> Int {
-        let totalExercisesTime = (model.workTime + model.restTime) * model.exercises * model.rounds
-        let totalRoundResets = model.roundResetTime * (model.rounds - 1)
-        return totalExercisesTime + totalRoundResets + model.getReadyTime
-    }
-    
-    private func calculateElapsedTime() -> Int {
-        let totalPlannedTime = calculateTotalPlannedTime()
-        var remainingTime = 0
-        
-        if model.isGetReadyPhase {
-            // Get Ready phase: remaining = current get ready time + full workout
-            remainingTime += Int(smoothProgressValue)
-            remainingTime += (model.workTime + model.restTime) * model.exercises * model.rounds
-            remainingTime += model.roundResetTime * (model.rounds - 1)
-        } else if model.isWorkPhase {
-            // Work phase: remaining = current work time + rest of workout
-            remainingTime += Int(smoothProgressValue)
-            remainingTime += model.restTime * (model.exercises - model.currentExercise + 1) * (model.rounds - model.currentRound + 1)
-            remainingTime += model.workTime * (model.exercises - model.currentExercise) * (model.rounds - model.currentRound + 1)
-            remainingTime += model.roundResetTime * (model.rounds - model.currentRound)
-        } else if model.timeRemaining == model.roundResetTime {
-            // Round Reset phase: remaining = current round reset time + rest of workout
-            remainingTime += Int(smoothProgressValue)
-            remainingTime += (model.workTime + model.restTime) * model.exercises * (model.rounds - model.currentRound)
-            remainingTime += model.roundResetTime * (model.rounds - model.currentRound - 1)
-        } else {
-            // Rest phase: remaining = current rest time + rest of workout
-            remainingTime += Int(smoothProgressValue)
-            remainingTime += model.workTime * (model.exercises - model.currentExercise) * (model.rounds - model.currentRound + 1)
-            remainingTime += model.restTime * (model.exercises - model.currentExercise) * (model.rounds - model.currentRound + 1)
-            remainingTime += model.roundResetTime * (model.rounds - model.currentRound)
-        }
-        
-        return max(0, totalPlannedTime - remainingTime)
-    }
-    
+    // MARK: - Computed Phase Info
     var currentPhase: String {
-        if model.isGetReadyPhase {
-            return "GET READY"
-        } else if model.isWorkPhase {
-            return "WORK"
-        } else if model.timeRemaining == model.roundResetTime && !model.isWorkPhase && model.currentExercise == model.exercises {
-            return "ROUND RESET"
-        } else {
-            return "REST"
+        switch model.phase {
+        case .getReady: return "GET READY"
+        case .work: return "WORK"
+        case .rest: return "REST"
+        case .roundReset: return "ROUND RESET"
+        case .finished: return "FINISHED"
         }
     }
     
     var currentPhaseColor: Color {
-        switch currentPhase {
-        case "GET READY": return .orange
-        case "WORK": return .red
-        case "REST": return .green
-        case "ROUND RESET": return .yellow
-        default: return .orange
+        switch model.phase {
+        case .getReady: return .orange
+        case .work: return .red
+        case .rest: return .green
+        case .roundReset: return .yellow
+        case .finished: return .gray
         }
     }
     
     var currentMaxTime: Double {
-        switch currentPhase {
-        case "GET READY": return Double(model.getReadyTime)
-        case "WORK": return Double(model.workTime)
-        case "REST": return Double(model.restTime)
-        case "ROUND RESET": return Double(model.roundResetTime)
-        default: return Double(model.workTime)
+        switch model.phase {
+        case .getReady: return Double(model.getReadyTime)
+        case .work: return Double(model.workTime)
+        case .rest: return Double(model.restTime)
+        case .roundReset: return Double(model.roundResetTime)
+        case .finished: return 0
         }
     }
     
     var currentDisplayTime: Int {
-        return max(0, Int(ceil(smoothProgressValue)))
+        return model.timeRemaining
     }
     
-    var currentProgressTime: Double {
-        return smoothProgressValue
+    var formattedTotalTime: String {
+        let minutes = totalTimeRemaining / 60
+        let seconds = totalTimeRemaining % 60
+        return "\(minutes):\(seconds < 10 ? "0" : "")\(seconds)"
     }
     
-    // Timer control methods
-    func startTimer() {
+    // MARK: - Public API (for Views)
+    func toggleTimer() {
         if isRunning {
-            stopTimer()
+            // Pause
+            isRunning = false
+            timer?.invalidate()
+            pauseStartTime = Date() // track pause start
+
+            // Allow screen to sleep when paused
+            UIApplication.shared.isIdleTimerDisabled = false
         } else {
+            // Resume
             isRunning = true
-            resetAllAlertTrackers()
-            
-            // Start smooth animation timer for all phases
-            startSmoothAnimationTimer()
-            
-            // Set up the current phase
-            if model.isGetReadyPhase {
-                setupGetReadyPhase()
-            } else {
-                setupCurrentPhase()
+
+            if workoutStartTime == nil { // first start
+                workoutStartTime = Date()
+                totalWorkoutTimeAtStart = calculateTotalPlannedTime()
+                totalTimeRemaining = totalWorkoutTimeAtStart
             }
-        }
-    }
-    
-    private func setupGetReadyPhase() {
-        model.isGetReadyPhase = true
-        currentPhaseDuration = Double(model.getReadyTime)
-        phaseStartTime = Date()
-        smoothProgressValue = currentPhaseDuration
-    }
-    
-    private func setupCurrentPhase() {
-        currentPhaseDuration = currentMaxTime
-        phaseStartTime = Date()
-        smoothProgressValue = currentPhaseDuration
-    }
-    
-    private func startSmoothAnimationTimer() {
-        // High-frequency timer for smooth animation (60fps)
-        smoothAnimationTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            
-            // Use Task to update on main actor safely
-            Task { @MainActor in
-                await self.updateSmoothAnimation()
+
+            // Adjust total paused duration
+            if let pauseStart = pauseStartTime {
+                totalPausedDuration += Date().timeIntervalSince(pauseStart)
+                pauseStartTime = nil
             }
+
+            // Resume phase with exact remaining time
+            phaseEndTime = Date().addingTimeInterval(phaseTimeRemainingExact)
+
+            timer?.invalidate()
+            timer = Timer.scheduledTimer(withTimeInterval: 1/60.0, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    self?.tick()
+                }
+            }
+
+            // Prevent screen from sleeping while timer is running
+            UIApplication.shared.isIdleTimerDisabled = true
         }
     }
     
-    private func updateSmoothAnimation() async {
-        guard let startTime = phaseStartTime else { return }
+    private func startTimer() {
+        isRunning = true
+        UIApplication.shared.isIdleTimerDisabled = true // keep screen awake
         
-        let elapsed = Date().timeIntervalSince(startTime)
-        let remaining = max(0, currentPhaseDuration - elapsed)
-        
-        smoothProgressValue = remaining
-        model.timeRemaining = Int(ceil(remaining))
-        
-        // Check for alerts based on the current phase
-        checkForAllAlerts()
-        
-        // Check if current phase is complete
-        if remaining <= 0 {
-            smoothProgressValue = 0
-            model.timeRemaining = 0
-            advanceToNextPhase()
+        if workoutStartTime == nil {
+            workoutStartTime = Date()
+            totalWorkoutTimeAtStart = calculateTotalPlannedTime()
+            totalTimeRemaining = totalWorkoutTimeAtStart
         }
+        
+        if let pauseStart = pauseStartTime {
+            totalPausedDuration += Date().timeIntervalSince(pauseStart)
+            pauseStartTime = nil
+        }
+        
+        scheduleTimer()
+    }
+    
+    private func pauseTimer() {
+        isRunning = false
+        timer?.invalidate()
+        pauseStartTime = Date()
+        UIApplication.shared.isIdleTimerDisabled = false
+    }
+
+    func resetTimer() {
+        timer?.invalidate()
+        isRunning = false
+        UIApplication.shared.isIdleTimerDisabled = false
+        resetToInitialState()
     }
     
     func stopTimer() {
-        smoothAnimationTimer?.invalidate()
-        smoothAnimationTimer = nil
+        timer?.invalidate()
         isRunning = false
-        phaseStartTime = nil
+        UIApplication.shared.isIdleTimerDisabled = false
     }
     
-    func resetTimer() {
-        stopTimer()
-        model = TimerModel()
-        smoothProgressValue = Double(model.getReadyTime)
-        resetAllAlertTrackers()
-        phaseStartTime = nil
-        currentPhaseDuration = 0.0
-    }
-    
-    // Alert methods
-    private func checkForAllAlerts() {
-        checkForHalfwayAlert()
-        checkForWorkCountdownAlert()
-        checkForRestCountdownAlert()
-        checkForRoundResetCountdownAlert()
-        checkForGetReadyCountdownAlert()
-    }
-    
-    private func checkForHalfwayAlert() {
-        if model.isWorkPhase && !model.isGetReadyPhase && !hasPlayedHalfwayAlert {
-            let halfwayPoint = model.workTime / 2
-            if Int(ceil(smoothProgressValue)) == halfwayPoint {
-                audioManager.playSound(named: "halfway_alert")
-                hasPlayedHalfwayAlert = true
+    // MARK: - Timer Handling
+    private func scheduleTimer() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 1/60.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.tick()
             }
         }
     }
     
-    private func checkForWorkCountdownAlert() {
-        if model.isWorkPhase && !model.isGetReadyPhase && !hasPlayedCountdownAlert {
-            if Int(ceil(smoothProgressValue)) == 3 {
-                audioManager.playSound(named: "countdown_alert")
-                hasPlayedCountdownAlert = true
+    private func startPhase(_ phase: TimerModel.Phase, duration: Int) {
+        model.phase = phase
+        model.timeRemaining = duration
+        smoothProgressValue = Double(duration)
+        
+        resetAlertTrackers()
+        
+        // Set exact remaining time
+        phaseTimeRemainingExact = Double(duration)
+        phaseEndTime = Date().addingTimeInterval(phaseTimeRemainingExact)
+        
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 1/60.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.tick()
             }
         }
     }
     
-    private func checkForRestCountdownAlert() {
-        if !model.isWorkPhase && !model.isGetReadyPhase && model.timeRemaining != model.roundResetTime && !hasPlayedRestCountdown {
-            if Int(ceil(smoothProgressValue)) == 3 {
-                audioManager.playSound(named: "countdown_alert_321")
-                hasPlayedRestCountdown = true
-            }
+    private func tick() {
+        guard let phaseEnd = phaseEndTime else { return }
+        
+        // Phase timer
+        let phaseRemaining = max(phaseEnd.timeIntervalSinceNow, 0)
+        phaseTimeRemainingExact = phaseRemaining
+        model.timeRemaining = Int(ceil(phaseRemaining))
+        smoothProgressValue = phaseRemaining
+        
+        // Total workout timer
+        if let workoutStart = workoutStartTime {
+            let elapsed = Date().timeIntervalSince(workoutStart) - totalPausedDuration
+            totalTimeRemaining = max(totalWorkoutTimeAtStart - Int(elapsed), 0)
+        }
+        
+        handleAlerts()
+        
+        if phaseRemaining <= 0 {
+            advanceToNextPhase()
         }
     }
-    
-    private func checkForRoundResetCountdownAlert() {
-        if !model.isWorkPhase && !model.isGetReadyPhase &&
-           model.timeRemaining == model.roundResetTime &&
-           model.currentExercise == model.exercises &&
-           !hasPlayedRoundResetCountdown {
-            if Int(ceil(smoothProgressValue)) == 3 {
-                audioManager.playSound(named: "countdown_alert_321")
-                hasPlayedRoundResetCountdown = true
-            }
-        }
-    }
-    
-    private func checkForGetReadyCountdownAlert() {
-        if model.isGetReadyPhase && !hasPlayedGetReadyCountdown {
-            if Int(ceil(smoothProgressValue)) == 3 {
-                audioManager.playSound(named: "countdown_alert_321")
-                hasPlayedGetReadyCountdown = true
-            }
-        }
-    }
-    
-    private func resetAllAlertTrackers() {
-        hasPlayedHalfwayAlert = false
-        hasPlayedCountdownAlert = false
-        hasPlayedRestCountdown = false
-        hasPlayedGetReadyCountdown = false
-        hasPlayedRoundResetCountdown = false
-    }
-    
+
+    // MARK: - Phase Transitions
     private func advanceToNextPhase() {
-        if model.isGetReadyPhase {
-            transitionFromGetReadyToWork()
-        } else if model.isWorkPhase {
-            transitionFromWorkToRest()
-        } else {
-            transitionFromRestToNext()
-        }
+        timer?.invalidate()
         
-        // Set up the next phase if timer is still running
-        if isRunning {
-            setupCurrentPhase()
-        }
-    }
-    
-    private func transitionFromGetReadyToWork() {
-        model.isGetReadyPhase = false
-        model.isWorkPhase = true
-        hasPlayedHalfwayAlert = false
-        hasPlayedCountdownAlert = false
-    }
-    
-    private func transitionFromWorkToRest() {
-        model.isWorkPhase = false
-        hasPlayedRestCountdown = false
-    }
-    
-    private func transitionFromRestToNext() {
-        if model.currentExercise < model.exercises {
-            transitionToNextExercise()
-        } else {
-            transitionToNextRoundOrComplete()
-        }
-    }
-    
-    private func transitionToNextExercise() {
-        model.currentExercise += 1
-        model.isWorkPhase = true
-        hasPlayedHalfwayAlert = false
-        hasPlayedCountdownAlert = false
-    }
-    
-    private func transitionToNextRoundOrComplete() {
-        if model.currentRound < model.rounds {
-            transitionToNextRound()
-        } else {
-            resetTimer()
-        }
-    }
-    
-    private func transitionToNextRound() {
-        model.currentRound += 1
-        model.currentExercise = 1
-        model.isWorkPhase = false
-        hasPlayedRoundResetCountdown = false
-        
-        // After round reset, start the get ready phase for the next round
-        if isRunning {
-            model.isGetReadyPhase = true
-            setupGetReadyPhase()
-        }
-    }
-    
-    // NEW METHOD: Start the get ready phase specifically
-    func startGetReadyPhase() {
-        if !isRunning {
-            resetTimer()
-            model.isGetReadyPhase = true
-            setupGetReadyPhase()
-            startTimer()
-        }
-    }
-    
-    func applyAdjustment(_ value: Int) {
-        guard let adjuster = currentAdjuster else { return }
-        
-        switch adjuster {
+        switch model.phase {
+        case .getReady:
+            startPhase(.work, duration: model.workTime)
         case .work:
-            model.workTime = value
-            if model.isWorkPhase && !model.isGetReadyPhase {
-                currentPhaseDuration = Double(value)
-                smoothProgressValue = Double(value)
-                phaseStartTime = Date()
+            if model.currentExercise < model.exercises {
+                model.currentExercise += 1
+                startPhase(.rest, duration: model.restTime)
+            } else if model.currentRound < model.rounds {
+                startPhase(.roundReset, duration: model.roundResetTime)
+            } else {
+                stopWorkout()
             }
         case .rest:
-            model.restTime = value
-            if !model.isWorkPhase && !model.isGetReadyPhase && model.timeRemaining != model.roundResetTime {
-                currentPhaseDuration = Double(value)
-                smoothProgressValue = Double(value)
-                phaseStartTime = Date()
-            }
-        case .rounds:
-            model.rounds = value
+            startPhase(.work, duration: model.workTime)
         case .roundReset:
-            model.roundResetTime = value
-            if !model.isWorkPhase && !model.isGetReadyPhase && model.timeRemaining == model.roundResetTime {
-                currentPhaseDuration = Double(value)
-                smoothProgressValue = Double(value)
-                phaseStartTime = Date()
-            }
-        case .exercises:
-            model.exercises = value
-        case .getReady: // NEW CASE: Handle get ready time adjustment
-            model.getReadyTime = value
-            if model.isGetReadyPhase {
-                currentPhaseDuration = Double(value)
-                smoothProgressValue = Double(value)
-                phaseStartTime = Date()
-            }
+            model.currentRound += 1
+            model.currentExercise = 1
+            startPhase(.work, duration: model.workTime)
+        case .finished:
+            stopWorkout()
         }
     }
+    
+    // MARK: - Alerts
+    private func handleAlerts() {
+        switch model.phase {
+        case .work:
+            checkHalfwayAlert()
+            checkWorkCountdownAlert()
+        case .rest, .getReady, .roundReset:
+            checkNonWorkCountdownAlert()
+        default:
+            break
+        }
+    }
+
+    private func checkHalfwayAlert() {
+        guard !hasPlayedHalfwayAlert else { return }
+        if Int(ceil(smoothProgressValue)) == max(1, model.workTime / 2) {
+            audioManager.playSound(named: "halfway_alert")
+            hasPlayedHalfwayAlert = true
+        }
+    }
+
+    private func checkWorkCountdownAlert() {
+        guard !hasPlayedCountdownAlert else { return }
+        if Int(ceil(smoothProgressValue)) <= 3 && Int(ceil(smoothProgressValue)) > 0 {
+            audioManager.playSound(named: "countdown_alert") // different sound for work phase
+            hasPlayedCountdownAlert = true
+        }
+    }
+
+    private func checkNonWorkCountdownAlert() {
+        guard !hasPlayedCountdownAlert else { return }
+        if Int(ceil(smoothProgressValue)) <= 3 && Int(ceil(smoothProgressValue)) > 0 {
+            audioManager.playSound(named: "countdown_alert_321") // rest/getReady/roundReset use this
+            hasPlayedCountdownAlert = true
+        }
+    }
+
+    private func resetAlertTrackers() {
+        hasPlayedHalfwayAlert = false
+        hasPlayedCountdownAlert = false
+        hasPlayedRoundResetCountdown = false
+    }
+
+    
+    // MARK: - Workout History
+    private func stopWorkout() {
+        timer?.invalidate()
+        isRunning = false
+        saveWorkoutHistory()
+        model.phase = .finished
+    }
+    
+    func saveWorkoutHistory(from existingWorkout: WorkoutHistory? = nil, name: String? = nil) {
+        guard let start = workoutStartTime else { return }
+        let duration = Int(Date().timeIntervalSince(start))
+        
+        let history = WorkoutHistory(
+            id: existingWorkout?.id ?? UUID(),
+            date: existingWorkout?.date ?? Date(),
+            name: name ?? existingWorkout?.name ?? currentWorkoutName ?? "Workout",
+            workTime: model.workTime,
+            restTime: model.restTime,
+            exercises: model.exercises,
+            rounds: model.rounds,
+            roundResetTime: model.roundResetTime,
+            getReadyTime: model.getReadyTime,
+            totalDuration: duration,
+            completedRounds: model.currentRound,
+            completedExercises: model.currentExercise
+        )
+        
+        workoutHistory.insert(history, at: 0)
+        persistWorkoutHistory()
+    }
+
+    func persistWorkoutHistory() {
+        if let encoded = try? JSONEncoder().encode(workoutHistory) {
+            UserDefaults.standard.set(encoded, forKey: "workoutHistory")
+        }
+    }
+    
+    func loadWorkoutHistory() {
+        if let data = UserDefaults.standard.data(forKey: "workoutHistory"),
+           let decoded = try? JSONDecoder().decode([WorkoutHistory].self, from: data) {
+            workoutHistory = decoded
+        }
+    }
+    
+    func loadWorkout(_ workout: WorkoutHistory) {
+        stopTimer()
+        
+        model.workTime = workout.workTime
+        model.restTime = workout.restTime
+        model.exercises = workout.exercises
+        model.rounds = workout.rounds
+        model.roundResetTime = workout.roundResetTime
+        model.getReadyTime = workout.getReadyTime
+        
+        // Preserve the workout name for saving later
+        currentWorkoutName = workout.name
+        
+        resetToInitialState()
+        totalWorkoutTimeAtStart = calculateTotalPlannedTime()
+        totalTimeRemaining = totalWorkoutTimeAtStart
+    }
+    
+    func renameWorkout(at index: Int, to newName: String) {
+        guard index < workoutHistory.count else { return }
+        workoutHistory[index].name = newName
+        persistWorkoutHistory()
+    }
+    
+    // MARK: - Apply adjustment values from the UI
+    func applyAdjustment(_ value: Int) {
+        guard let adjuster = currentAdjuster else { return }
+        switch adjuster {
+        case .work: model.workTime = max(1, value)
+        case .rest: model.restTime = max(1, value)
+        case .rounds: model.rounds = max(1, value)
+        case .roundReset: model.roundResetTime = max(1, value)
+        case .exercises: model.exercises = max(1, value)
+        case .getReady: model.getReadyTime = max(1, value)
+        }
+        
+        // Recalculate total planned time whenever a phase is changed
+        totalWorkoutTimeAtStart = calculateTotalPlannedTime()
+        
+        // If the workout already started, shift the workout end time
+        if let start = workoutStartTime {
+            // Recompute remaining based on new total
+            let elapsed = Date().timeIntervalSince(start) - totalPausedDuration
+            totalTimeRemaining = max(totalWorkoutTimeAtStart - Int(elapsed), 0)
+        } else {
+            // Before workout starts, just reset remaining to new planned total
+            totalTimeRemaining = totalWorkoutTimeAtStart
+        }
+    }
+    
+    // MARK: - Helpers
+    private func resetToInitialState() {
+        model.currentRound = 1
+        model.currentExercise = 1
+        model.phase = .getReady
+        model.timeRemaining = model.getReadyTime
+        phaseTimeRemainingExact = Double(model.getReadyTime)
+        
+        totalWorkoutTimeAtStart = calculateTotalPlannedTime()
+        totalTimeRemaining = totalWorkoutTimeAtStart
+        
+        totalPausedDuration = 0
+        pauseStartTime = nil
+        workoutStartTime = nil
+        phaseEndTime = nil
+        
+        smoothProgressValue = Double(model.getReadyTime)
+        resetAlertTrackers()
+        isRunning = false
+    }
+    
+    private func calculateTotalPlannedTime() -> Int {
+        let workBlock = model.workTime * model.exercises
+        let restBlock = model.restTime * max(0, model.exercises - 1)
+
+        if model.rounds == 1 {
+            // (work * exercises) + (rest * (exercises - 1)) + get ready
+            return workBlock + restBlock + model.getReadyTime
+        }
+
+        if model.rounds == 2 {
+            // work*exercises + rest*(exercises-1) + round reset*(rounds-1)
+            // + work*exercises + rest*(exercises-1) + get ready
+            return (workBlock + restBlock)
+                 + (model.roundResetTime * (model.rounds - 1))
+                 + (workBlock + restBlock)
+                 + model.getReadyTime
+        }
+
+        // 3 or more rounds
+        // ((work*exercises + rest*(exercises-1) + round reset*(rounds-1))*(rounds-1))
+        // + work*exercises + rest*(exercises-1) + get ready
+        return ((workBlock + restBlock + (model.roundResetTime * (model.rounds - 1))) * (model.rounds - 1))
+             + (workBlock + restBlock)
+             + model.getReadyTime
+    }
+
+    init() {
+            resetToInitialState()
+        }
 }
