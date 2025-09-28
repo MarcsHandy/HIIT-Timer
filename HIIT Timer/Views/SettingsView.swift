@@ -19,7 +19,7 @@ struct SettingsView: View {
                 viewModel.showingAdjuster = true
             }
             
-            AdjusterRow(icon: "🔄", title: "Rounds: \(viewModel.model.rounds)", value: viewModel.model.rounds, color: .yellow) {
+            AdjusterRow(icon: "🔄", title: "Rounds: \(viewModel.model.rounds)", value: viewModel.model.rounds, color: .teal) {
                 viewModel.currentAdjuster = .rounds
                 viewModel.tempValue = viewModel.model.rounds
                 viewModel.textInput = "\(viewModel.model.rounds)"

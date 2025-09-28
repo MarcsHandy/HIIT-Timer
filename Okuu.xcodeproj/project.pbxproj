@@ -24,9 +24,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		C960CBE32E788B4D005A276A /* HIIT Timer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HIIT Timer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C960CBF02E788B55005A276A /* HIIT TimerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "HIIT TimerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C960CBFA2E788B55005A276A /* HIIT TimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "HIIT TimerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C960CBE32E788B4D005A276A /* Okuu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Okuu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C960CBF02E788B55005A276A /* OkuuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OkuuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C960CBFA2E788B55005A276A /* OkuuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OkuuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -85,9 +85,9 @@
 		C960CBE42E788B4D005A276A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C960CBE32E788B4D005A276A /* HIIT Timer.app */,
-				C960CBF02E788B55005A276A /* HIIT TimerTests.xctest */,
-				C960CBFA2E788B55005A276A /* HIIT TimerUITests.xctest */,
+				C960CBE32E788B4D005A276A /* Okuu.app */,
+				C960CBF02E788B55005A276A /* OkuuTests.xctest */,
+				C960CBFA2E788B55005A276A /* OkuuUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,9 +95,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C960CBE22E788B4D005A276A /* HIIT Timer */ = {
+		C960CBE22E788B4D005A276A /* Okuu */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C960CC042E788B55005A276A /* Build configuration list for PBXNativeTarget "HIIT Timer" */;
+			buildConfigurationList = C960CC042E788B55005A276A /* Build configuration list for PBXNativeTarget "Okuu" */;
 			buildPhases = (
 				C960CBDF2E788B4D005A276A /* Sources */,
 				C960CBE02E788B4D005A276A /* Frameworks */,
@@ -110,16 +110,16 @@
 			fileSystemSynchronizedGroups = (
 				C960CBE52E788B4D005A276A /* HIIT Timer */,
 			);
-			name = "HIIT Timer";
+			name = Okuu;
 			packageProductDependencies = (
 			);
 			productName = "HIIT Timer";
-			productReference = C960CBE32E788B4D005A276A /* HIIT Timer.app */;
+			productReference = C960CBE32E788B4D005A276A /* Okuu.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C960CBEF2E788B55005A276A /* HIIT TimerTests */ = {
+		C960CBEF2E788B55005A276A /* OkuuTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C960CC072E788B55005A276A /* Build configuration list for PBXNativeTarget "HIIT TimerTests" */;
+			buildConfigurationList = C960CC072E788B55005A276A /* Build configuration list for PBXNativeTarget "OkuuTests" */;
 			buildPhases = (
 				C960CBEC2E788B55005A276A /* Sources */,
 				C960CBED2E788B55005A276A /* Frameworks */,
@@ -133,16 +133,16 @@
 			fileSystemSynchronizedGroups = (
 				C960CBF32E788B55005A276A /* HIIT TimerTests */,
 			);
-			name = "HIIT TimerTests";
+			name = OkuuTests;
 			packageProductDependencies = (
 			);
 			productName = "HIIT TimerTests";
-			productReference = C960CBF02E788B55005A276A /* HIIT TimerTests.xctest */;
+			productReference = C960CBF02E788B55005A276A /* OkuuTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C960CBF92E788B55005A276A /* HIIT TimerUITests */ = {
+		C960CBF92E788B55005A276A /* OkuuUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C960CC0A2E788B55005A276A /* Build configuration list for PBXNativeTarget "HIIT TimerUITests" */;
+			buildConfigurationList = C960CC0A2E788B55005A276A /* Build configuration list for PBXNativeTarget "OkuuUITests" */;
 			buildPhases = (
 				C960CBF62E788B55005A276A /* Sources */,
 				C960CBF72E788B55005A276A /* Frameworks */,
@@ -156,11 +156,11 @@
 			fileSystemSynchronizedGroups = (
 				C960CBFD2E788B55005A276A /* HIIT TimerUITests */,
 			);
-			name = "HIIT TimerUITests";
+			name = OkuuUITests;
 			packageProductDependencies = (
 			);
 			productName = "HIIT TimerUITests";
-			productReference = C960CBFA2E788B55005A276A /* HIIT TimerUITests.xctest */;
+			productReference = C960CBFA2E788B55005A276A /* OkuuUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -186,7 +186,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C960CBDE2E788B4D005A276A /* Build configuration list for PBXProject "HIIT Timer" */;
+			buildConfigurationList = C960CBDE2E788B4D005A276A /* Build configuration list for PBXProject "Okuu" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -200,9 +200,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C960CBE22E788B4D005A276A /* HIIT Timer */,
-				C960CBEF2E788B55005A276A /* HIIT TimerTests */,
-				C960CBF92E788B55005A276A /* HIIT TimerUITests */,
+				C960CBE22E788B4D005A276A /* Okuu */,
+				C960CBEF2E788B55005A276A /* OkuuTests */,
+				C960CBF92E788B55005A276A /* OkuuUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -258,12 +258,12 @@
 /* Begin PBXTargetDependency section */
 		C960CBF22E788B55005A276A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C960CBE22E788B4D005A276A /* HIIT Timer */;
+			target = C960CBE22E788B4D005A276A /* Okuu */;
 			targetProxy = C960CBF12E788B55005A276A /* PBXContainerItemProxy */;
 		};
 		C960CBFC2E788B55005A276A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C960CBE22E788B4D005A276A /* HIIT Timer */;
+			target = C960CBE22E788B4D005A276A /* Okuu */;
 			targetProxy = C960CBFB2E788B55005A276A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -463,7 +463,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HIIT Timer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HIIT Timer";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Okuu.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Okuu";
 			};
 			name = Debug;
 		};
@@ -482,7 +482,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HIIT Timer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HIIT Timer";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Okuu.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Okuu";
 			};
 			name = Release;
 		};
@@ -523,7 +523,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C960CBDE2E788B4D005A276A /* Build configuration list for PBXProject "HIIT Timer" */ = {
+		C960CBDE2E788B4D005A276A /* Build configuration list for PBXProject "Okuu" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C960CC022E788B55005A276A /* Debug */,
@@ -532,7 +532,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C960CC042E788B55005A276A /* Build configuration list for PBXNativeTarget "HIIT Timer" */ = {
+		C960CC042E788B55005A276A /* Build configuration list for PBXNativeTarget "Okuu" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C960CC052E788B55005A276A /* Debug */,
@@ -541,7 +541,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C960CC072E788B55005A276A /* Build configuration list for PBXNativeTarget "HIIT TimerTests" */ = {
+		C960CC072E788B55005A276A /* Build configuration list for PBXNativeTarget "OkuuTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C960CC082E788B55005A276A /* Debug */,
@@ -550,7 +550,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C960CC0A2E788B55005A276A /* Build configuration list for PBXNativeTarget "HIIT TimerUITests" */ = {
+		C960CC0A2E788B55005A276A /* Build configuration list for PBXNativeTarget "OkuuUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C960CC0B2E788B55005A276A /* Debug */,

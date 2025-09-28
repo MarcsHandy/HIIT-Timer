@@ -289,13 +289,13 @@ class TimerViewModel: ObservableObject {
         hasPlayedRoundResetCountdown = false
     }
 
-    
     // MARK: - Workout History
     private func stopWorkout() {
         timer?.invalidate()
         isRunning = false
         saveWorkoutHistory()
         model.phase = .finished
+        audioManager.playSound(named: "Workout_Complete")
     }
     
     func saveWorkoutHistory(from existingWorkout: WorkoutHistory? = nil, name: String? = nil) {
