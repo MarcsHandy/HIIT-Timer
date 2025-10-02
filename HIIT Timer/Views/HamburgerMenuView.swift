@@ -16,6 +16,8 @@ struct HamburgerMenuView: View {
         case history = "History"
         case settings = "Settings"
         case statistics = "Statistics"
+        case weight = "Weight Tracker"
+        case calories = "Calorie Tracker"
         
         var icon: String {
             switch self {
@@ -23,6 +25,8 @@ struct HamburgerMenuView: View {
             case .history: return "📊"
             case .settings: return "⚙️"
             case .statistics: return "📈"
+            case .weight: return "⚖️"
+            case .calories: return "🍎"
             }
         }
         
@@ -33,6 +37,8 @@ struct HamburgerMenuView: View {
             case .history: return .red
             case .settings: return .yellow
             case .statistics: return Color.orange.opacity(0.8)
+            case .weight: return .blue
+            case .calories: return .green
             }
         }
     }
@@ -85,7 +91,7 @@ struct HamburgerMenuView: View {
                             withAnimation(.spring(response: 0.3)) {
                                 selectedTab = tab
                                 localSelectedTab = tab
-                                isShowing = false // Close menu after selection
+                                isShowing = false
                                 
                                 // Haptic feedback
                                 let generator = UIImpactFeedbackGenerator(style: .medium)
@@ -126,7 +132,7 @@ struct HamburgerMenuView: View {
                     
                     Spacer()
                     
-                    // Footer with subtle theme colors
+                    // Footer
                     VStack {
                         Divider()
                             .background(Color.orange.opacity(0.3))
@@ -164,7 +170,7 @@ struct HamburgerMenuView: View {
                             endPoint: .trailing
                         ))
                         .frame(width: 4)
-                        .offset(x: 138), // Half of 280 - 2 (half of stroke width)
+                        .offset(x: 138),
                     alignment: .trailing
                 )
                 .offset(x: isShowing ? 0 : -280)

@@ -30,6 +30,10 @@ struct ContentView: View {
                     case .statistics:
                         StatisticsView(showHamburgerMenu: $showHamburgerMenu)
                             .environmentObject(viewModel)
+                    case .weight:
+                        WeightTrackerView(showHamburgerMenu: $showHamburgerMenu)
+                    case .calories:
+                        CalorieTrackerView(showHamburgerMenu: $showHamburgerMenu)
                     }
                 }
                 .blur(radius: (viewModel.showingAdjuster || showHamburgerMenu) ? 10 : 0)
@@ -137,4 +141,3 @@ struct ContentView_Previews: PreviewProvider {
             .previewDevice("iPhone 14")
     }
 }
-
