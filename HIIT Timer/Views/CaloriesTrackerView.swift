@@ -13,7 +13,7 @@ struct CalorieTrackerView: View {
     @State private var selectedMeal: MealType = .breakfast
     
     @State private var showSearchSheet = false
-    @State private var searchMeal: MealType = .breakfast
+    @State private var searchMeal: MealType? = nil
     
     // MARK: - Computed
     private var totalCalories: Double {
@@ -91,14 +91,13 @@ struct CalorieTrackerView: View {
                             // Search Button
                             Button(action: {
                                 searchMeal = meal
-                                showSearchSheet = true
                             }) {
                                 Image(systemName: "magnifyingglass.circle.fill")
                                     .resizable()
                                     .frame(width: 28, height: 28)
                             }
                             .foregroundColor(.green)
-                            .buttonStyle(PlainButtonStyle()) // ensures tap area is just the icon
+                            .buttonStyle(PlainButtonStyle())
 
                             Spacer() // push buttons to the left
                         }
@@ -156,12 +155,15 @@ struct CalorieTrackerView: View {
             .padding()
         }
         // MARK: - Search Sheet
-        .sheet(isPresented: $showSearchSheet) {
+        .sheet(item: $searchMeal) { meal in
             FoodSearchView(
-                meal: searchMeal,
+                meal: meal,
                 selectedDate: selectedDate,
                 foodEntries: $foodEntries,
-                isPresented: $showSearchSheet
+                isPresented: Binding(
+                    get: { searchMeal != nil },
+                    set: { if !$0 { searchMeal = nil } }
+                )
             )
         }
     }
