@@ -51,6 +51,8 @@ struct CalorieTrackerView: View {
                     .foregroundColor(nutritionScore > 70 ? .green : .orange)
             }
             
+            WaterGoalView()
+            
             // Meal Sections
             List {
                 ForEach(MealType.allCases, id: \.self) { meal in
