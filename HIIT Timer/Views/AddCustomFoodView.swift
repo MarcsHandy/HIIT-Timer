@@ -63,7 +63,8 @@ struct AddCustomFoodView: View {
             name: customFoodName.trimmingCharacters(in: .whitespaces),
             calories: calories,
             date: selectedDate,
-            mealType: meal
+            mealType: meal,
+            nutrition: nil // no detailed nutrition for custom food
         )
         
         foodEntries.append(entry)

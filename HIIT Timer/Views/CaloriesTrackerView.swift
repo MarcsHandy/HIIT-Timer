@@ -133,10 +133,11 @@ struct CalorieTrackerView: View {
                         
                         let entry = FoodEntry(
                             id: UUID(),
-                            name: customFoodName,
+                            name: customFoodName.trimmingCharacters(in: .whitespaces),
                             calories: calories,
                             date: selectedDate,
-                            mealType: selectedMeal
+                            mealType: selectedMeal,
+                            nutrition: nil
                         )
                         foodEntries.append(entry)
                         customFoodName = ""

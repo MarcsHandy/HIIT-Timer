@@ -9,10 +9,12 @@ struct FoodSearchView: View {
     @State private var query: String = ""
     @State private var isLoading = false
     @State private var searchResults: [FoodEntry] = []
-
+    @State private var selectedFood: FoodEntry?
+    
     var body: some View {
         NavigationView {
             VStack {
+                // Search Field
                 TextField("Enter food to search...", text: $query)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
@@ -20,15 +22,16 @@ struct FoodSearchView: View {
                         searchFood(query: newValue)
                     }
                 
+                // Loading Indicator
                 if isLoading {
                     ProgressView("Searching...")
                         .padding()
                 }
                 
+                // Search Results
                 List(searchResults) { food in
                     Button {
-                        foodEntries.append(food)
-                        isPresented = false
+                        selectedFood = food
                     } label: {
                         HStack {
                             Text(food.name)
@@ -43,6 +46,14 @@ struct FoodSearchView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { isPresented = false }
+                }
+            }
+            // Nutrition Detail Sheet
+            .sheet(item: $selectedFood) { food in
+                NutritionDetailView(food: food, isPresented: $selectedFood) { selectedFood in
+                    // Add the food when pressed in the detail view
+                    foodEntries.append(selectedFood)
+                    isPresented = false // dismiss search view
                 }
             }
         }
@@ -83,16 +94,18 @@ struct FoodSearchView: View {
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                let foods = json["foods"] as? [[String: Any]] {
                 
-                // Map all returned foods into FoodEntry objects
-                return foods.compactMap { item in
-                    guard let calories = item["nf_calories"] as? Double,
-                          let name = item["food_name"] as? String else { return nil }
+                return foods.map { item in
+                    let name = item["food_name"] as? String ?? "Unknown"
+                    let calories = item["nf_calories"] as? Double ?? 0
+                    let nutrition = Nutrition(from: item)
+                    
                     return FoodEntry(
                         id: UUID(),
                         name: name.capitalized,
                         calories: calories,
                         date: selectedDate,
-                        mealType: meal
+                        mealType: meal,
+                        nutrition: nutrition
                     )
                 }
             }
