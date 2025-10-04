@@ -8,36 +8,36 @@ struct FoodSearchView: View {
     
     @State private var query: String = ""
     @State private var isLoading = false
-    
+    @State private var searchResults: [FoodEntry] = []
+
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
+            VStack {
                 TextField("Enter food to search...", text: $query)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
+                    .onChange(of: query) { newValue in
+                        searchFood(query: newValue)
+                    }
                 
                 if isLoading {
                     ProgressView("Searching...")
+                        .padding()
                 }
                 
-                Button("Add Food") {
-                    Task {
-                        guard !query.isEmpty else { return }
-                        isLoading = true
-                        if let entry = await fetchCalories(for: query) {
-                            foodEntries.append(entry)
-                            query = ""
-                            isPresented = false
+                List(searchResults) { food in
+                    Button {
+                        foodEntries.append(food)
+                        isPresented = false
+                    } label: {
+                        HStack {
+                            Text(food.name)
+                            Spacer()
+                            Text("\(Int(food.calories)) cal")
+                                .foregroundColor(.gray)
                         }
-                        isLoading = false
                     }
                 }
-                .padding()
-                .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                
-                Spacer()
             }
             .navigationTitle("Search \(meal.rawValue)")
             .toolbar {
@@ -48,11 +48,24 @@ struct FoodSearchView: View {
         }
     }
     
-    private func fetchCalories(for food: String) async -> FoodEntry? {
+    private func searchFood(query: String) {
+        guard !query.isEmpty else {
+            searchResults = []
+            return
+        }
+        
+        Task {
+            isLoading = true
+            searchResults = await fetchCalories(for: query)
+            isLoading = false
+        }
+    }
+    
+    private func fetchCalories(for food: String) async -> [FoodEntry] {
         guard let appId = ProcessInfo.processInfo.environment["NUTRITIONIX_APP_ID"],
               let apiKey = ProcessInfo.processInfo.environment["NUTRITIONIX_API_KEY"] else {
             print("❌ Missing Nutritionix credentials")
-            return nil
+            return []
         }
         
         let url = URL(string: "https://trackapi.nutritionix.com/v2/natural/nutrients")!
@@ -68,22 +81,24 @@ struct FoodSearchView: View {
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let foods = json["foods"] as? [[String: Any]],
-               let first = foods.first,
-               let calories = first["nf_calories"] as? Double,
-               let name = first["food_name"] as? String {
+               let foods = json["foods"] as? [[String: Any]] {
                 
-                return FoodEntry(
-                    id: UUID(),
-                    name: name.capitalized,
-                    calories: calories,
-                    date: selectedDate,
-                    mealType: meal
-                )
+                // Map all returned foods into FoodEntry objects
+                return foods.compactMap { item in
+                    guard let calories = item["nf_calories"] as? Double,
+                          let name = item["food_name"] as? String else { return nil }
+                    return FoodEntry(
+                        id: UUID(),
+                        name: name.capitalized,
+                        calories: calories,
+                        date: selectedDate,
+                        mealType: meal
+                    )
+                }
             }
         } catch {
             print("❌ API Error: \(error.localizedDescription)")
         }
-        return nil
+        return []
     }
 }
